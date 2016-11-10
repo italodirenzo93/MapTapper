@@ -11,28 +11,19 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.mobiledev.idirenzo.maptapper.MainActivity">
 
-    <Button
-        android:text="Download"
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/buttonDownload"
-        android:onClick="onClick"/>
-
-    <Button
-        android:text="Show"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/buttonDownload"
-        android:layout_alignParentStart="true"
-        android:id="@+id/buttonShow"
-        android:onClick="showDownload"/>
+        android:text="Place tag under phone"
+        android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+        android:textAlignment="center"
+        android:textAllCaps="false"
+        android:id="@+id/textViewInstruction"/>
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/buttonShow"
+        android:layout_below="@+id/textViewInstruction"
         android:layout_alignParentStart="true"
-        android:id="@+id/imageView1" />
+        android:id="@+id/imageViewMap" />
 </RelativeLayout>
