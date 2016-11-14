@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         imageViewMap = (ImageView)findViewById(R.id.imageViewMap);
+        imageViewMap.setOnTouchListener(new ImageScaler());
 
         // Create the cache folder
         mapChacheDir = new File(getExternalFilesDir(null) + MAP_CHACHE_FOLDER);
@@ -85,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
-        //return super.onCreateOptionsMenu(menu);
         return true;
     }
 
