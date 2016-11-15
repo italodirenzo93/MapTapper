@@ -12,6 +12,7 @@ import android.widget.ImageView;
 
 public class ImageScaler implements View.OnTouchListener {
 
+    // Scaling matrices
     private Matrix matrix = new Matrix();
     private Matrix savedMatrix = new Matrix();
 
@@ -19,7 +20,7 @@ public class ImageScaler implements View.OnTouchListener {
     private enum ImageState { NONE, DRAG, ZOOM }
     private ImageState state = ImageState.NONE;
 
-    // Scaling stuff
+    // Position tracking
     private PointF start = new PointF();
     private PointF mid = new PointF();
     private float oldDist = 1f;
@@ -64,6 +65,16 @@ public class ImageScaler implements View.OnTouchListener {
         return true;
     }
 
+    // Accessors
+    public Matrix getSourceMatrix() {
+        return this.matrix;
+    }
+
+    public void setSourceMatrix(Matrix matrix) {
+        this.matrix = matrix;
+    }
+
+    // Utility Methods
     /** Determine the space between the first two fingers */
     private static float spacing(MotionEvent event) {
         // ...

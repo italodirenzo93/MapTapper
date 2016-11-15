@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private long downloadQueue;
 
     private ImageView imageViewMap;
+    private ImageScaler mapScaler;
 
     private File mapChacheDir;
 
@@ -47,7 +49,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         imageViewMap = (ImageView)findViewById(R.id.imageViewMap);
-        imageViewMap.setOnTouchListener(new ImageScaler());
+        mapScaler = new ImageScaler();
+        imageViewMap.setOnTouchListener(mapScaler);
 
         // Create the cache folder
         mapChacheDir = new File(getExternalFilesDir(null) + MAP_CHACHE_FOLDER);
@@ -57,7 +60,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        // Get the download manager service
         downloadManager = (DownloadManager)getSystemService(DOWNLOAD_SERVICE);
+
+        // Register a BroadcastReciever to respond when the map download is complete
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -67,15 +73,11 @@ public class MainActivity extends AppCompatActivity {
                     query.setFilterById(downloadQueue);
                     Cursor c = downloadManager.query(query);
                     if (c.moveToFirst()) {
-                        int columnIndex = c
-                                .getColumnIndex(DownloadManager.COLUMN_STATUS);
-                        if (DownloadManager.STATUS_SUCCESSFUL == c
-                                .getInt(columnIndex)) {
-
-                            String uri_String_abcd = c
-                                    .getString(c
-                                            .getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                        int columnIndex = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                        if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
+                            String uri_String_abcd = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                             imageViewMap.setImageURI(Uri.parse(uri_String_abcd));
+                            scaleMapToFit();
                         }
                     }
                 }
@@ -112,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
         File mapFile = new File(mapChacheDir, filename);
         if (mapFile.exists()) { // If a file by the same name already exists, use the file on disk
             imageViewMap.setImageURI(Uri.fromFile(mapFile));
+            scaleMapToFit();
             Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
         } else {    // Download the file
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
@@ -139,6 +142,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Helpers
+
+    /**
+     * Clears the all saved map files from device storage.
+     */
     private void clearMapCache() {
         boolean success = true;
         if (mapChacheDir.exists()) {
@@ -152,5 +159,29 @@ public class MainActivity extends AppCompatActivity {
         }
         String message = success ? "Map Cache Cleared" : "Unable to clear Map Cache";
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Resizes the map image to fit the ImageView container.
+     */
+    private void scaleMapToFit() {
+        if (imageViewMap.getDrawable() != null) {
+            // Get the source and destination rectangles
+            float imgWidth = imageViewMap.getDrawable().getIntrinsicWidth();
+            float imgHeight = imageViewMap.getDrawable().getIntrinsicHeight();
+            RectF src = new RectF(0, 0, imgWidth, imgHeight);
+            RectF dst = new RectF(0, 0, imageViewMap.getWidth(), imageViewMap.getHeight());
+
+            // Create a matrix for scaling
+            Matrix scalingMtx = new Matrix();
+            scalingMtx.setRectToRect(src, dst, Matrix.ScaleToFit.CENTER);
+
+            // Apply scaling
+            imageViewMap.setImageMatrix(scalingMtx);
+            mapScaler.setSourceMatrix(scalingMtx);     // So that the image size does not reset when going to drag/scale it
+
+            // Force the ImageView to redraw itself
+            imageViewMap.invalidate();
+        }
     }
 }
