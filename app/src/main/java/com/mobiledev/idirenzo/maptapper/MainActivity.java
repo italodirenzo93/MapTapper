@@ -6,9 +6,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.support.v7.app.AppCompatActivity;
@@ -33,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageScaler mapScaler;
 
     private File mapChacheDir;
+
+    private float imgWidth;
+    private float imgHeight;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         // Get the download manager service
         downloadManager = (DownloadManager)getSystemService(DOWNLOAD_SERVICE);
 
+
         // Register a BroadcastReciever to respond when the map download is complete
         registerReceiver(new BroadcastReceiver() {
             @Override
@@ -77,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
                         if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
                             String uri_String_abcd = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                             imageViewMap.setImageURI(Uri.parse(uri_String_abcd));
+                            scaleMapToFit();
+                            drawCoord();
                             scaleMapToFit();
                         }
                     }
@@ -167,8 +181,8 @@ public class MainActivity extends AppCompatActivity {
     private void scaleMapToFit() {
         if (imageViewMap.getDrawable() != null) {
             // Get the source and destination rectangles
-            float imgWidth = imageViewMap.getDrawable().getIntrinsicWidth();
-            float imgHeight = imageViewMap.getDrawable().getIntrinsicHeight();
+            imgWidth = imageViewMap.getDrawable().getIntrinsicWidth();
+            imgHeight = imageViewMap.getDrawable().getIntrinsicHeight();
             RectF src = new RectF(0, 0, imgWidth, imgHeight);
             RectF dst = new RectF(0, 0, imageViewMap.getWidth(), imageViewMap.getHeight());
 
@@ -184,4 +198,37 @@ public class MainActivity extends AppCompatActivity {
             imageViewMap.invalidate();
         }
     }
+
+    private void drawCoord() {
+        Resources res = getResources();
+        Bitmap map_pin = BitmapFactory.decodeResource(res, R.drawable.map_pin);
+
+        imageViewMap.buildDrawingCache();
+        Bitmap bitmap = imageViewMap.getDrawingCache();
+
+        int mapWidth = imageViewMap.getWidth();
+        int mapHeight = imageViewMap.getHeight();
+
+        // scale map_pin to map image
+        double pin_scaleRatio = 1 / 8.0;
+        int pinWidth = (int)(map_pin.getWidth() * pin_scaleRatio);
+        int pinHeight = (int)(map_pin.getHeight() * pin_scaleRatio);
+
+        Bitmap scaled_pin = Bitmap.createScaledBitmap(map_pin, pinWidth, pinHeight, false);
+
+        //Create a new image bitmap and attach a new canvas to it
+        Bitmap tempBitmap = Bitmap.createBitmap(mapWidth, mapHeight, Bitmap.Config.RGB_565);
+        Canvas tempCanvas = new Canvas(tempBitmap);
+
+        //Draw the image bitmap into the cavas
+        tempCanvas.drawBitmap(bitmap, 0, 0, null);
+
+        //Draw everything else onto the canvas
+        tempCanvas.drawBitmap(scaled_pin, (mapWidth/2)-(pinWidth/2), mapHeight/2 - pinHeight, null);
+
+        //Attach the canvas to the ImageView
+        imageViewMap.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
+        imageViewMap.invalidate();
+    }
+
 }
