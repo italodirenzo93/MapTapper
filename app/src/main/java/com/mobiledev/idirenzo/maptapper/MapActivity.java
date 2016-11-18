@@ -17,15 +17,13 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.nfc.tech.NfcA;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
 
-public class MainActivity extends BaseActivity {
+public class MapActivity extends BaseActivity {
 
     private NfcAdapter nfcAdapter;
     private DownloadManager downloadManager;
@@ -39,7 +37,7 @@ public class MainActivity extends BaseActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_map);
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         if (nfcAdapter == null) {
@@ -122,7 +120,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void onPostResume() {
-        Intent nfcIntent = new Intent(this, MainActivity.class);
+        Intent nfcIntent = new Intent(this, MapActivity.class);
         nfcIntent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, nfcIntent, 0);
         IntentFilter[] intentFilter = new IntentFilter[]{};

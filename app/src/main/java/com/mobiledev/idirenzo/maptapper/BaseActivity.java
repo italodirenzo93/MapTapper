@@ -30,6 +30,9 @@ public abstract class BaseActivity extends AppCompatActivity {
             case R.id.clearMenuItem:
                 clearMapCache();
                 return true;
+            case R.id.listMenuItem:
+                startActivity(new Intent(this, MapListActivity.class));
+                return true;
             case R.id.aboutMenuItem:
                 startActivity(new Intent(this, AboutActivity.class));
                 return true;
