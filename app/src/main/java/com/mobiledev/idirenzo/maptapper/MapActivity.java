@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -52,6 +53,14 @@ public class MapActivity extends BaseActivity {
         mapScaler = new ImageScaler();
         imageViewMap.setOnTouchListener(mapScaler);
 
+        // Check if there was an incoming map file to open
+        {
+            String mapFilename = getIntent().getStringExtra(MapListActivity.MAP_FILE_EXTRA);
+            if (mapFilename != null) {
+                imageViewMap.setImageURI(Uri.parse(mapFilename));
+            }
+        }
+
         // Create the cache folder
         mapCacheDir = new File(getExternalFilesDir(null), MAP_CHACHE_FOLDER);
         if (!mapCacheDir.exists()) {
@@ -62,7 +71,6 @@ public class MapActivity extends BaseActivity {
 
         // Get the download manager service
         downloadManager = (DownloadManager)getSystemService(DOWNLOAD_SERVICE);
-
 
         // Register a BroadcastReciever to respond when the map download is complete
         registerReceiver(new BroadcastReceiver() {
@@ -127,6 +135,15 @@ public class MapActivity extends BaseActivity {
 
         nfcAdapter.enableForegroundDispatch(this, pendingIntent, intentFilter, null);
         super.onPostResume();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // When the ImageView has finished inflating and an image is set, scale it
+        if (imageViewMap.getDrawable() != null) {
+            scaleMapToFit();
+        }
     }
 
     // Helpers
