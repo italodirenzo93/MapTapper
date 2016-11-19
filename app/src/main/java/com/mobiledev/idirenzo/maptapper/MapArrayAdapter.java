@@ -11,6 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.util.Date;
 
 /**
  * Created by Italo on 2016-11-18.
@@ -43,9 +45,17 @@ public class MapArrayAdapter extends ArrayAdapter<File> {
             }
 
             // Set the title
-            TextView tv = (TextView)v.findViewById(R.id.lstMapTitle);
-            if (tv != null) {
-                tv.setText(f.getName());
+            TextView tvTitle = (TextView)v.findViewById(R.id.lstMapTitle);
+            if (tvTitle != null) {
+                tvTitle.setText(f.getName());
+            }
+
+            // Set the file last modified date
+            TextView tvDate = (TextView)v.findViewById(R.id.lstMapDate);
+            if (tvDate != null) {
+                Date lastModDate = new Date(f.lastModified());
+                DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
+                tvDate.setText(dateFormat.format(lastModDate));
             }
         }
         return v;

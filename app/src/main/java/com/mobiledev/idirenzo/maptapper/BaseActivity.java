@@ -27,11 +27,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.clearMenuItem:
-                clearMapCache();
+            case R.id.scanMenuItem:
+                startActivity(new Intent(this, MapActivity.class));
                 return true;
             case R.id.listMenuItem:
                 startActivity(new Intent(this, MapListActivity.class));
+                return true;
+            case R.id.clearMenuItem:
+                clearMapCache();
                 return true;
             case R.id.aboutMenuItem:
                 startActivity(new Intent(this, AboutActivity.class));
