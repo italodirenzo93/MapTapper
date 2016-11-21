@@ -16,6 +16,8 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
@@ -28,14 +30,12 @@ import java.io.File;
 
 public class MapActivity extends BaseActivity {
 
-    private NfcAdapter nfcAdapter;
     private DownloadManager downloadManager;
     private long downloadQueue;
 
     private ImageView imageViewMap;
     private ImageScaler mapScaler;
 
-    private File mapCacheDir;
     private int xCoord = 0;
     private int yCoord = 0;
 
@@ -43,15 +43,6 @@ public class MapActivity extends BaseActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
-        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if (nfcAdapter == null) {
-            Toast.makeText(this, "Your phone is not equipped with NFC. This you will not be able to use " +
-                "the full functionality of this app.", Toast.LENGTH_LONG).show();
-        }
-        else if (!nfcAdapter.isEnabled()) {
-            Toast.makeText(this, "NFC is disabled. Please enable is it for full app functionality.", Toast.LENGTH_LONG).show();
-        }
 
         imageViewMap = (ImageView)findViewById(R.id.imageViewMap);
         mapScaler = new ImageScaler();
@@ -62,14 +53,6 @@ public class MapActivity extends BaseActivity {
             String mapFilename = getIntent().getStringExtra(MapListActivity.MAP_FILE_EXTRA);
             if (mapFilename != null) {
                 imageViewMap.setImageURI(Uri.parse(mapFilename));
-            }
-        }
-
-        // Create the cache folder
-        mapCacheDir = new File(getExternalFilesDir(null), MAP_CHACHE_FOLDER);
-        if (!mapCacheDir.exists()) {
-            if (!mapCacheDir.mkdirs()) {
-                Toast.makeText(this, "Unable to create cache folder.", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -132,12 +115,17 @@ public class MapActivity extends BaseActivity {
                 scaleMapToFit();
                 Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
             } else {    // Download the file
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                request.setDestinationInExternalFilesDir(this, null, MAP_CHACHE_FOLDER + "/" + filename);
-                downloadQueue = downloadManager.enqueue(request);
-                Toast.makeText(this, "Downloading map...", Toast.LENGTH_SHORT).show();
-            }
-        }
+                if (isNetworkAvailable()) {
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                    request.setDestinationInExternalFilesDir(this, null, MAP_CHACHE_FOLDER + "/" + filename);
+                    downloadQueue = downloadManager.enqueue(request);
+                    Toast.makeText(this, "Downloading map...", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "An internet connection is required to download new maps. " +
+                            "Please aquire one to scan a new map.", Toast.LENGTH_LONG).show();
+                } // if network available
+            } // if map exists
+        } // if nfc data
     }
 
     @Override
@@ -167,6 +155,16 @@ public class MapActivity extends BaseActivity {
     }
 
     // Helpers
+    /**
+     * Detect if an internet connection is available.
+     * @return True if network is enabled. False otherwise.
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
     /**
      * Resizes the map image to fit the ImageView container.
