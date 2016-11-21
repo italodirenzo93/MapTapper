@@ -11,27 +11,20 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
-import android.support.v7.app.AppCompatActivity;
+import android.nfc.Tag;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.support.annotation.Nullable;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
 
-public class MainActivity extends AppCompatActivity {
-
-    private static final String MAP_CHACHE_FOLDER = "/map-cache/";
+public class MapActivity extends BaseActivity {
 
     private NfcAdapter nfcAdapter;
     private DownloadManager downloadManager;
@@ -40,15 +33,12 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imageViewMap;
     private ImageScaler mapScaler;
 
-    private File mapChacheDir;
-
-    private float imgWidth;
-    private float imgHeight;
+    private File mapCacheDir;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_map);
 
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         if (nfcAdapter == null) {
@@ -63,17 +53,24 @@ public class MainActivity extends AppCompatActivity {
         mapScaler = new ImageScaler();
         imageViewMap.setOnTouchListener(mapScaler);
 
+        // Check if there was an incoming map file to open
+        {
+            String mapFilename = getIntent().getStringExtra(MapListActivity.MAP_FILE_EXTRA);
+            if (mapFilename != null) {
+                imageViewMap.setImageURI(Uri.parse(mapFilename));
+            }
+        }
+
         // Create the cache folder
-        mapChacheDir = new File(getExternalFilesDir(null) + MAP_CHACHE_FOLDER);
-        if (!mapChacheDir.exists()) {
-            if (!mapChacheDir.mkdirs()) {
+        mapCacheDir = new File(getExternalFilesDir(null), MAP_CHACHE_FOLDER);
+        if (!mapCacheDir.exists()) {
+            if (!mapCacheDir.mkdirs()) {
                 Toast.makeText(this, "Unable to create cache folder.", Toast.LENGTH_SHORT).show();
             }
         }
 
         // Get the download manager service
         downloadManager = (DownloadManager)getSystemService(DOWNLOAD_SERVICE);
-
 
         // Register a BroadcastReciever to respond when the map download is complete
         registerReceiver(new BroadcastReceiver() {
@@ -100,41 +97,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.options_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menuClearCache:
-                clearMapCache();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
 
-        String url = intent.getDataString();
-        String[] tokens = url.split("/");
-        String filename = tokens[tokens.length-1];
+        Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        if (nfcTag != null) {
+            String url = intent.getDataString();
+            String[] tokens = url.split("/");
+            String filename = tokens[tokens.length - 1];
 
-        File mapFile = new File(mapChacheDir, filename);
-        if (mapFile.exists()) { // If a file by the same name already exists, use the file on disk
-            imageViewMap.setImageURI(Uri.fromFile(mapFile));
-            scaleMapToFit();
-            Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
-        } else {    // Download the file
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-            request.setDestinationInExternalFilesDir(this, null, MAP_CHACHE_FOLDER + filename);
-            downloadQueue = downloadManager.enqueue(request);
-            Toast.makeText(this, "Downloading map...", Toast.LENGTH_SHORT).show();
+            File mapFile = new File(mapCacheDir, filename);
+            if (mapFile.exists()) { // If a file by the same name already exists, use the file on disk
+                imageViewMap.setImageURI(Uri.fromFile(mapFile));
+                scaleMapToFit();
+                Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
+            } else {    // Download the file
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                request.setDestinationInExternalFilesDir(this, null, MAP_CHACHE_FOLDER + "/" + filename);
+                downloadQueue = downloadManager.enqueue(request);
+                Toast.makeText(this, "Downloading map...", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -146,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPostResume() {
-        Intent nfcIntent = new Intent(this, MainActivity.class);
+        Intent nfcIntent = new Intent(this, MapActivity.class);
         nfcIntent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, nfcIntent, 0);
         IntentFilter[] intentFilter = new IntentFilter[]{};
@@ -155,25 +137,16 @@ public class MainActivity extends AppCompatActivity {
         super.onPostResume();
     }
 
-    // Helpers
-
-    /**
-     * Clears the all saved map files from device storage.
-     */
-    private void clearMapCache() {
-        boolean success = true;
-        if (mapChacheDir.exists()) {
-            File[] files = mapChacheDir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    if (!f.delete())
-                        success = false;
-                }
-            }
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // When the ImageView has finished inflating and an image is set, scale it
+        if (imageViewMap.getDrawable() != null) {
+            scaleMapToFit();
         }
-        String message = success ? "Map Cache Cleared" : "Unable to clear Map Cache";
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
+
+    // Helpers
 
     /**
      * Resizes the map image to fit the ImageView container.
@@ -181,8 +154,8 @@ public class MainActivity extends AppCompatActivity {
     private void scaleMapToFit() {
         if (imageViewMap.getDrawable() != null) {
             // Get the source and destination rectangles
-            imgWidth = imageViewMap.getDrawable().getIntrinsicWidth();
-            imgHeight = imageViewMap.getDrawable().getIntrinsicHeight();
+            float imgWidth = imageViewMap.getDrawable().getIntrinsicWidth();
+            float imgHeight = imageViewMap.getDrawable().getIntrinsicHeight();
             RectF src = new RectF(0, 0, imgWidth, imgHeight);
             RectF dst = new RectF(0, 0, imageViewMap.getWidth(), imageViewMap.getHeight());
 
