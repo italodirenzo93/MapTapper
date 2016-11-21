@@ -11,7 +11,9 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -34,6 +36,8 @@ public class MapActivity extends BaseActivity {
     private ImageScaler mapScaler;
 
     private File mapCacheDir;
+    private int xCoord = 0;
+    private int yCoord = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -87,7 +91,7 @@ public class MapActivity extends BaseActivity {
                             String uri_String_abcd = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
                             imageViewMap.setImageURI(Uri.parse(uri_String_abcd));
                             scaleMapToFit();
-                            drawCoord();
+                            drawCoord(xCoord, yCoord);
                             scaleMapToFit();
                         }
                     }
@@ -102,13 +106,29 @@ public class MapActivity extends BaseActivity {
 
         Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (nfcTag != null) {
-            String url = intent.getDataString();
-            String[] tokens = url.split("/");
-            String filename = tokens[tokens.length - 1];
+            String data = intent.getDataString();
+            String[] tokens = data.split("/");
+            String filename = tokens[tokens.length - 2];
+
+            // Get coord from url string     www.url.com/{x:y}
+            String raw_coord = tokens[tokens.length - 1];
+            int startIndex = raw_coord.indexOf("{");
+            int endIndex = raw_coord.indexOf("}");
+            String coord = raw_coord.substring(startIndex + 1,endIndex);
+            String[] xy = coord.split(",");
+
+            xCoord = Integer.parseInt(xy[0]);
+            yCoord = Integer.parseInt(xy[1]);
+
+            // grab the url without the trailing coords
+            String url = data.substring(0, data.indexOf("{") - 1);
+
 
             File mapFile = new File(mapCacheDir, filename);
             if (mapFile.exists()) { // If a file by the same name already exists, use the file on disk
                 imageViewMap.setImageURI(Uri.fromFile(mapFile));
+                scaleMapToFit();
+                drawCoord(xCoord, yCoord);
                 scaleMapToFit();
                 Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
             } else {    // Download the file
@@ -172,7 +192,10 @@ public class MapActivity extends BaseActivity {
         }
     }
 
-    private void drawCoord() {
+    /**
+     * Draw a marker at the coordinates stored on the nfc tag.
+     */
+    private void drawCoord(int x, int y) {
         Resources res = getResources();
         Bitmap map_pin = BitmapFactory.decodeResource(res, R.drawable.map_pin);
 
@@ -190,14 +213,15 @@ public class MapActivity extends BaseActivity {
         Bitmap scaled_pin = Bitmap.createScaledBitmap(map_pin, pinWidth, pinHeight, false);
 
         //Create a new image bitmap and attach a new canvas to it
-        Bitmap tempBitmap = Bitmap.createBitmap(mapWidth, mapHeight, Bitmap.Config.RGB_565);
+        Bitmap tempBitmap = Bitmap.createBitmap(mapWidth, mapHeight, bitmap.getConfig());
         Canvas tempCanvas = new Canvas(tempBitmap);
 
         //Draw the image bitmap into the cavas
+        tempCanvas.drawColor(Color.WHITE);
         tempCanvas.drawBitmap(bitmap, 0, 0, null);
 
         //Draw everything else onto the canvas
-        tempCanvas.drawBitmap(scaled_pin, (mapWidth/2)-(pinWidth/2), mapHeight/2 - pinHeight, null);
+        tempCanvas.drawBitmap(scaled_pin, mapWidth/2 + x, mapHeight/2 - y, null);
 
         //Attach the canvas to the ImageView
         imageViewMap.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
