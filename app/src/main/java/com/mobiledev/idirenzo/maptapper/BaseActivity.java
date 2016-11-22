@@ -79,7 +79,6 @@ public abstract class BaseActivity extends AppCompatActivity {
      * Clears the all saved map files from device storage.
      */
     private void clearMapCache() {
-        File mapCacheDir = new File(getExternalFilesDir(null), MAP_CHACHE_FOLDER);
         boolean success = true;
         if (mapCacheDir.exists()) {
             File[] files = mapCacheDir.listFiles();

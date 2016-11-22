@@ -13,7 +13,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
@@ -22,7 +21,6 @@ import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -52,7 +50,7 @@ public class MapActivity extends BaseActivity {
         {
             String mapFilename = getIntent().getStringExtra(MapListActivity.MAP_FILE_EXTRA);
             if (mapFilename != null) {
-                imageViewMap.setImageURI(Uri.parse(mapFilename));
+                loadMap(mapFilename, false);
             }
         }
 
@@ -72,10 +70,7 @@ public class MapActivity extends BaseActivity {
                         int columnIndex = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
                         if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
                             String uri_String_abcd = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-                            imageViewMap.setImageURI(Uri.parse(uri_String_abcd));
-                            scaleMapToFit();
-                            drawCoord(xCoord, yCoord);
-                            scaleMapToFit();
+                            loadMap(uri_String_abcd, true);
                         }
                     }
                 }
@@ -106,13 +101,9 @@ public class MapActivity extends BaseActivity {
             // grab the url without the trailing coords
             String url = data.substring(0, data.indexOf("{") - 1);
 
-
             File mapFile = new File(mapCacheDir, filename);
             if (mapFile.exists()) { // If a file by the same name already exists, use the file on disk
-                imageViewMap.setImageURI(Uri.fromFile(mapFile));
-                scaleMapToFit();
-                drawCoord(xCoord, yCoord);
-                scaleMapToFit();
+                loadMap(mapFile.getPath(), true);
                 Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
             } else {    // Download the file
                 if (isNetworkAvailable()) {
@@ -164,6 +155,20 @@ public class MapActivity extends BaseActivity {
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    /**
+     * Utility method to set the current map image and take care of any additional bookkeeping.
+     * @param path Path to image file in external storage dir
+     * @param drawMarker Draw the "You Are Here" marker.
+     */
+    private void loadMap(String path, boolean drawMarker) {
+        imageViewMap.setImageURI(Uri.parse(path));
+        scaleMapToFit();
+        if (drawMarker) {
+            drawCoord(xCoord, yCoord);
+            scaleMapToFit();
+        }
     }
 
     /**
