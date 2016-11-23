@@ -65,7 +65,9 @@ public abstract class BaseActivity extends AppCompatActivity {
                 startActivity(new Intent(this, MapListActivity.class));
                 return true;
             case R.id.clearMenuItem:
-                clearMapCache();
+                boolean success = clearMapCache();
+                String message = success ? "Map Cache Cleared" : "Unable to clear Map Cache";
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.aboutMenuItem:
                 startActivity(new Intent(this, AboutActivity.class));
@@ -77,19 +79,18 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     /**
      * Clears the all saved map files from device storage.
+     * @return True if succeeded. False otherwise.
      */
-    private void clearMapCache() {
-        boolean success = true;
+    private static boolean clearMapCache() {
         if (mapCacheDir.exists()) {
             File[] files = mapCacheDir.listFiles();
             if (files != null) {
                 for (File f : files) {
                     if (!f.delete())
-                        success = false;
+                        return false;
                 }
             }
         }
-        String message = success ? "Map Cache Cleared" : "Unable to clear Map Cache";
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        return true;
     }
 }
