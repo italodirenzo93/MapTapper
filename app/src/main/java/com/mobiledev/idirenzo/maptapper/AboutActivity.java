@@ -8,5 +8,8 @@ public class AboutActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
+
+        // Set the window title
+        setTitle(R.string.menu_about_activity);
     }
 }

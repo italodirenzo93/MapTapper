@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
@@ -41,6 +40,9 @@ public class MapActivity extends BaseActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        // Set the window title
+        setTitle(R.string.menu_map_activity);
 
         imageViewMap = (ImageView)findViewById(R.id.imageViewMap);
         mapScaler = new ImageScaler();
@@ -220,7 +222,7 @@ public class MapActivity extends BaseActivity {
         Canvas tempCanvas = new Canvas(tempBitmap);
 
         //Draw the image bitmap into the cavas
-        tempCanvas.drawColor(Color.WHITE);
+        tempCanvas.drawColor(getResources().getColor(R.color.colorBackground, null));
         tempCanvas.drawBitmap(bitmap, 0, 0, null);
 
         //Draw everything else onto the canvas

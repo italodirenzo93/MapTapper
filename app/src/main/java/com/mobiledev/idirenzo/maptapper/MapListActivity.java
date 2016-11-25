@@ -19,6 +19,9 @@ public class MapListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map_list);
 
+        // Set the window title
+        setTitle(R.string.menu_list_activity);
+
         ListView lv = (ListView)findViewById(R.id.listViewMaps);
         files = mapCacheDir.listFiles();
 
