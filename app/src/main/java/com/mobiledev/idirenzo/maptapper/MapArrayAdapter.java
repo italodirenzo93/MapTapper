@@ -47,7 +47,12 @@ public class MapArrayAdapter extends ArrayAdapter<File> {
             // Set the title
             TextView tvTitle = (TextView)v.findViewById(R.id.lstMapTitle);
             if (tvTitle != null) {
-                tvTitle.setText(f.getName());
+                String filename = f.getName();
+
+                // Strip hyphens, underscores, and the file extension
+                String mapDisplayName = filename.replaceAll("[-_]+", " ").substring(0, filename.indexOf('.'));
+
+                tvTitle.setText(mapDisplayName);
             }
 
             // Set the file last modified date

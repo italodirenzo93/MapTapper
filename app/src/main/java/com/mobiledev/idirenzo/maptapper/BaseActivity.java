@@ -31,7 +31,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (nfcAdapter == null) {
             nfcAdapter = NfcAdapter.getDefaultAdapter(this);
             if (!nfcAdapter.isEnabled()) {
-                Toast.makeText(this, "NFC is disabled. Please enable is it for full app functionality.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "NFC is disabled. Please enable it for full app functionality.", Toast.LENGTH_LONG).show();
             }
         }
 

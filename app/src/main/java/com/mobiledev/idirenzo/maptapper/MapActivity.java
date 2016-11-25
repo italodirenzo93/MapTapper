@@ -104,7 +104,8 @@ public class MapActivity extends BaseActivity {
             String url = data.substring(0, data.indexOf("{") - 1);
 
             File mapFile = new File(mapCacheDir, filename);
-            if (mapFile.exists()) { // If a file by the same name already exists, use the file on disk
+            // If a file by the same name already exists, use the file on disk
+            if (mapFile.exists()) {
                 loadMap(mapFile.getPath(), true);
                 Toast.makeText(this, "Map loaded from cache", Toast.LENGTH_SHORT).show();
             } else {    // Download the file
