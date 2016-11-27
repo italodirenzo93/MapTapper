@@ -4,12 +4,15 @@
     android:id="@+id/activity_map_list"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.mobiledev.idirenzo.maptapper.MapListActivity">
+    tools:context="com.mobiledev.idirenzo.maptapper.MapListActivity"
+    android:background="@color/colorBackground">
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:id="@+id/listViewMaps" />
+        android:id="@+id/listViewMaps"
+        android:divider="#FFFFFF"
+        android:dividerHeight="1dp"/>
 </RelativeLayout>

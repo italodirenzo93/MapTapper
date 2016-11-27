@@ -19,8 +19,10 @@ public class MapListActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map_list);
 
-        final ListView lv = (ListView)findViewById(R.id.listViewMaps);
-        final File mapCacheDir = new File(getExternalFilesDir(null), MAP_CHACHE_FOLDER);
+        // Set the window title
+        setTitle(R.string.menu_list_activity);
+
+        ListView lv = (ListView)findViewById(R.id.listViewMaps);
         files = mapCacheDir.listFiles();
 
         // Set the list view contents

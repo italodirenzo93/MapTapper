@@ -6,6 +6,13 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+
+        <!-- This is necessary instead of doing android:textColor because it will make all text everywhere white -->
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#FFFFFF</item>
+        <item name="android:textColorTertiary">#FFFFFF</item>
+
+        <item name="android:actionMenuTextColor">#000000</item>
     </style>
 
 </resources>
